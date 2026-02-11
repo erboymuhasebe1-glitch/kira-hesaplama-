@@ -99,7 +99,7 @@ else:
 # --- WHATSAPP ENTEGRASYONU ---
 st.markdown("---")
 st.subheader("📲 Müşavir Onayı")
-wa_numara = "905XXXXXXXXX" # BURAYA KENDİ NUMARANIZI YAZIN
+wa_numara = "902165670945" # BURAYA KENDİ NUMARANIZI YAZIN
 durum_metni = f"Ödenecek: {net_odenecek:,.2f} TL" if net_odenecek > 0 else f"İade: {iade_durumu:,.2f} TL"
 wa_msg = (
     f"*Çbk Mali Müşavirlik Kira Raporu ({vergi_yili})*\n\n"
