@@ -83,7 +83,7 @@ kesilen_stopaj = beyana_dahil_isyeri * 0.20
 net_sonuc = tahakkuk_eden - kesilen_stopaj
 
 # --- SONUÇ TABLOSU ---
-st.markdown(f"#### 📊 {vergi_yili} Yılı Vergi Hesaplama Özeti")
+st.markdown(f"#### 📊 {vergi_yili} Yılı Kira Gelirleri Vergi Tablosu")
 sonuc_metni = f"Ödenecek: {net_sonuc:,.2f} TL" if net_sonuc > 0 else f"İade: {abs(net_sonuc):,.2f} TL"
 
 report_df = pd.DataFrame({
