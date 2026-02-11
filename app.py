@@ -25,7 +25,7 @@ else:
     st.title("ÇBK MALİ MÜŞAVİRLİK")
     st.subheader("Şakir ÇETİN, Mali Müşavir - CPA")
 
-st.markdown("### Kira Geliri Beyanname Hesaplama Sistemi")
+st.markdown("### Kira Geliri Vergi Hesaplama")
 st.markdown("---")
 
 # --- GİRİŞ ALANI (SOL PANEL) ---
