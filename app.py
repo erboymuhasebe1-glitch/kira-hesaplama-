@@ -2,88 +2,122 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 
-# Kurumsal Kimlik Ayarları
-st.set_page_config(page_title="Çbk Mali Müşavirlik - Vergi Asistanı", layout="wide")
+# --- KURUMSAL AYARLAR ---
+st.set_page_config(page_title="Çbk Mali Müşavirlik - Kira Vergi Asistanı", layout="wide")
+
+# Özel CSS ile daha profesyonel görünüm
+st.markdown("""
+    <style>
+    .main { background-color: #f8f9fa; }
+    .stMetric { background-color: #ffffff; padding: 15px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    h1, h2, h3 { color: #1e3d59; }
+    </style>
+    """, unsafe_allow_html=True)
+
 st.title("⚖️ Çbk Mali Müşavirlik")
 st.subheader("Kira Geliri Beyanname Hesaplama Sistemi")
+st.markdown("---")
 
-# --- GİRİŞ ALANI ---
+# --- GİRİŞ ALANI (SOL PANEL) ---
 with st.sidebar:
-    st.header("📋 Veri Girişi")
+    st.header("📋 Hesaplama Parametreleri")
     vergi_yili = st.selectbox("Hesaplanacak Yılı Seçiniz", ["2025", "2026"])
     st.markdown("---")
-    isyeri_brut = st.number_input("İşyeri Kira Geliri (Brüt)", min_value=0.0, step=1000.0)
-    mesken_brut = st.number_input("Mesken (Konut) Kira Geliri", min_value=0.0, step=1000.0)
+    mesken_brut = st.number_input("Yıllık Mesken (Konut) Kira Geliri", min_value=0.0, step=1000.0, help="Yıl içinde tahsil edilen toplam konut kirası")
+    isyeri_brut = st.number_input("Yıllık İşyeri Kira Geliri (Brüt)", min_value=0.0, step=1000.0, help="Stopaj dahil brüt işyeri kirası")
+    st.markdown("---")
+    st.caption("© 2026 Çbk Mali Müşavirlik")
 
-# --- YILA GÖRE PARAMETRELER ---
+# --- YILA GÖRE PARAMETRE TANIMLARI ---
 if vergi_yili == "2025":
     istisna_siniri = 47000
     haddi_siniri = 1200000
-    # 2025 Gelir Vergisi Tarifesi
-    dilimler = [
-        (158000, 0.15),
-        (382000, 0.20),
-        (940000, 0.27),
-        (3000000, 0.35)
-    ]
-    sabitlemeler = [0, 23700, 68500, 219160] # Her dilimin başlangıç vergi toplamı
-else: # 2026 Parametreleri
+    # 2025 Vergi Dilimleri (İstediğiniz Baremler)
+    dilimler = [158000, 330000, 800000, 4300000]
+    oranlar = [0.15, 0.20, 0.27, 0.35, 0.40]
+    sabitlemeler = [0, 23700, 58100, 185000, 1410000]
+else:
     istisna_siniri = 58000
     haddi_siniri = 1500000
-    dilimler = [
-        (230000, 0.15),
-        (580000, 0.20),
-        (1200000, 0.27),
-        (3000000, 0.35)
-    ]
-    sabitlemeler = [0, 34500, 104500, 271900]
+    # 2026 Vergi Dilimleri (İstediğiniz Baremler)
+    dilimler = [190000, 400000, 1000000, 5300000]
+    oranlar = [0.15, 0.20, 0.27, 0.35, 0.40]
+    sabitlemeler = [0, 28500, 70500, 232500, 1737500]
 
-# --- HESAPLAMA MANTIĞI ---
+# --- HESAPLAMA MOTORU ---
 toplam_gelir = isyeri_brut + mesken_brut
-istisna_tutari = 0
+istisna_tutari = 0.0
 
-# İstisna Uygulama Şartları (Yeni formülünüze uygun)
+# İstisna Kuralı: İşyeri geliri varsa veya toplam gelir haddi aşıyorsa istisna = 0
+# Değilse: İstisna, konut gelirini aşamaz (Formülünüz: MIN(istisna; mesken_geliri))
 if isyeri_brut == 0 and mesken_brut > 0 and toplam_gelir < haddi_siniri:
-    istisna_tutari = min(istisna_siniri, mesken_brut)
+    istisna_tutari = min(float(istisna_siniri), mesken_brut)
 
-matrah = max(0.0, (toplam_gelir - istisna_tutari) * 0.85) # %15 Götürü Gider
+# Matrah Hesaplama (%15 Götürü Gider)
+istisna_sonrasi = toplam_gelir - istisna_tutari
+matrah = max(0.0, istisna_sonrasi * 0.85)
 
 # Dinamik Vergi Hesaplama Fonksiyonu
-def vergi_hesapla(m, d, s):
-    if m <= d[0][0]: return m * d[0][1]
-    elif m <= d[1][0]: return s[1] + (m - d[0][0]) * d[1][1]
-    elif m <= d[2][0]: return s[2] + (m - d[1][0]) * d[2][1]
-    elif m <= d[3][0]: return s[3] + (m - d[2][0]) * d[3][1]
-    else: return s[3] + (d[3][0] - d[2][0]) * d[3][1] + (m - d[3][0]) * 0.40
+def vergi_hesapla(m, d, o, s):
+    if m <= d[0]: return m * o[0]
+    elif m <= d[1]: return s[1] + (m - d[0]) * o[1]
+    elif m <= d[2]: return s[2] + (m - d[1]) * o[2]
+    elif m <= d[3]: return s[3] + (m - d[2]) * o[3]
+    else: return s[4] + (m - d[3]) * o[4]
 
-tahakkuk_eden = vergi_hesapla(matrah, dilimler, sabitlemeler)
+tahakkuk_eden = vergi_hesapla(matrah, dilimler, oranlar, sabitlemeler)
 kesilen_stopaj = isyeri_brut * 0.20
 net_odenecek = max(0.0, tahakkuk_eden - kesilen_stopaj)
+iade_durumu = max(0.0, kesilen_stopaj - tahakkuk_eden)
 
-# --- RAPORLAMA ---
+# --- SONUÇ RAPORU (Excel Görünümü) ---
 st.markdown(f"### 📊 {vergi_yili} Yılı Gelir Vergisi Hesaplama Sonucu")
 now = datetime.now().strftime("%d-%m-%Y %H:%M")
-st.caption(f"Rapor Tarihi: {now}")
+st.caption(f"İşlem Zamanı: {now}")
 
-report_data = {
+# Paylaştığınız Excel tablosuna uygun yapı
+report_df = pd.DataFrame({
     "Sıra": [1],
     "Vergi Dönemi": [f"01/{vergi_yili}-12/{vergi_yili}"],
     "Gelir Unsuru": ["Kira Geliri (GMSİ)"],
     "Matrah": [f"{matrah:,.2f} TL"],
     "Tahakkuk Eden Vergi": [f"{tahakkuk_eden:,.2f} TL"]
-}
-st.table(pd.DataFrame(report_data))
+})
+st.table(report_df)
 
-c1, c2, c3 = st.columns(3)
-c1.metric("Toplam Brüt Gelir", f"{toplam_gelir:,.2f} TL")
-c2.metric("İndirilen İstisna", f"{istisna_tutari:,.2f} TL")
-c3.metric("Ödenecek Net Vergi", f"{net_odenecek:,.2f} TL")
+# Özet Kartları
+col1, col2, col3, col4 = st.columns(4)
+col1.metric("Brüt Toplam", f"{toplam_gelir:,.2f} TL")
+col2.metric("İndirilen İstisna", f"{istisna_tutari:,.2f} TL")
+col3.metric("Ödenen Stopaj", f"{kesilen_stopaj:,.2f} TL")
 
-# WhatsApp Paylaşımı
+if net_odenecek > 0:
+    col4.metric("Ödenecek Vergi", f"{net_odenecek:,.2f} TL", delta_color="inverse")
+else:
+    col4.metric("İade Alınacak", f"{iade_durumu:,.2f} TL", delta_color="normal")
+
+# --- WHATSAPP ENTEGRASYONU ---
 st.markdown("---")
-wa_msg = f"*Çbk Mali Müşavirlik {vergi_yili} Kira Raporu*\n\n*Matrah:* {matrah:,.2f} TL\n*Net Vergi:* {net_odenecek:,.2f} TL"
-# BURAYA KENDİ NUMARANIZI EKLEYİN (Örn: 905321234567)
-wa_link = f"https://wa.me/902165670945?text={wa_msg.replace(' ', '%20').replace('*', '%2A')}"
+st.subheader("📲 Müşavir Onayı")
+wa_numara = "905XXXXXXXXX" # BURAYA KENDİ NUMARANIZI YAZIN
+durum_metni = f"Ödenecek: {net_odenecek:,.2f} TL" if net_odenecek > 0 else f"İade: {iade_durumu:,.2f} TL"
+wa_msg = (
+    f"*Çbk Mali Müşavirlik Kira Raporu ({vergi_yili})*\n\n"
+    f"*Mesken:* {mesken_brut:,.2f} TL\n"
+    f"*İşyeri:* {isyeri_brut:,.2f} TL\n"
+    f"*İstisna:* {istisna_tutari:,.2f} TL\n"
+    f"*Matrah:* {matrah:,.2f} TL\n"
+    f"*Sonuç:* {durum_metni}\n\n"
+    f"Kontrolünüzü rica ederim."
+)
+wa_link = f"https://wa.me/{wa_numara}?text={wa_msg.replace(' ', '%20').replace('*', '%2A')}"
 
-if st.button("📱 Sonucu WhatsApp'tan Müşavirime Gönder"):
-    st.markdown(f"[✅ WhatsApp ile Gönderilmeye Hazır (Tıklayın)]({wa_link})")
+st.markdown(f"""
+    <a href="{wa_link}" target="_blank">
+        <div style="background-color: #25D366; color: white; padding: 15px; text-align: center; border-radius: 10px; font-weight: bold; text-decoration: none; font-size: 18px;">
+            ✅ HESAPLAMAYI ONAYA GÖNDER (WhatsApp)
+        </div>
+    </a>
+    """, unsafe_allow_html=True)
+
+st.warning("Not: Bu hesaplama bilgilendirme amaçlıdır. Kesin beyanname öncesi mali müşavir onayı şarttır.")
