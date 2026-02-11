@@ -26,7 +26,7 @@ with st.sidebar:
     mesken_brut = st.number_input("Yıllık Mesken (Konut) Kira Geliri", min_value=0.0, step=1000.0)
     isyeri_brut = st.number_input("Yıllık İşyeri Kira Geliri (Brüt)", min_value=0.0, step=1000.0)
     st.markdown("---")
-    tel_no = st.text_input("Müşavir WhatsApp No", value="905XXXXXXXXX")
+    tel_no = st.text_input("Müşavir WhatsApp No", value="902165670945")
     st.caption("© 2026 Çbk Mali Müşavirlik")
 
 # --- YILA GÖRE PARAMETRELER ---
