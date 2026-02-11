@@ -27,7 +27,7 @@ with st.sidebar:
     isyeri_brut = st.number_input("Yıllık İşyeri Kira Geliri (Brüt)", min_value=0.0, step=1000.0)
     st.markdown("---")
     # Kendi numaranızı buraya yazın (Örn: 905321112233)
-    tel_no = st.text_input("WhatsApp Bildirim Numarası", value="905XXXXXXXXX")
+    tel_no = st.text_input("Müşavir WhatsApp No (90 ile başlayın)", value="905XXXXXXXXX")
     st.caption("© 2026 Çbk Mali Müşavirlik")
 
 # --- YILA GÖRE PARAMETRE TANIMLARI ---
@@ -65,14 +65,18 @@ kesilen_stopaj = isyeri_brut * 0.20
 net_odenecek = max(0.0, tahakkuk_eden - kesilen_stopaj)
 iade_durumu = max(0.0, kesilen_stopaj - tahakkuk_eden)
 
-# --- SONUÇ RAPORU (Tabloya Stopaj Eklendi) ---
+# --- SONUÇ RAPORU (TABLO DÜZENLENDİ) ---
 st.markdown(f"### 📊 {vergi_yili} Yılı Vergi Hesaplama Özeti")
 now = datetime.now().strftime("%d-%m-%Y %H:%M")
 
+# Hata veren f-string yapısı düzeltildi
+if net_odenecek > 0:
+    son_sonuc = f"{net_odenecek:,.2f} TL"
+else:
+    son_sonuc = f"- {iade_durumu:,.2f} TL (İade)"
+
 report_df = pd.DataFrame({
-    "Açıklama": ["Gelir Matrahı", "Tahakkuk Eden Gelir Vergisi", "Mahsup Edilecek Stopaj", "Ödenecek / İade"],
+    "Açıklama": ["Gelir Matrahı (%15 Götürü)", "Tahakkuk Eden Gelir Vergisi", "Mahsup Edilecek İşyeri Stopajı", "Net Ödenecek / İade"],
     "Tutar (TL)": [
         f"{matrah:,.2f} TL",
         f"{tahakkuk_eden:,.2f} TL",
-        f"- {kesilen_stopaj:,.2f} TL",
-        f"{net_odenecek:,.2f} TL" if net_odenecek > 0 else f"- {iade_durumu:,.
