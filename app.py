@@ -36,7 +36,7 @@ c1, c2 = st.columns(2)
 with c1:
     mesken_brut = st.number_input("🏠 Yıllık Konut Kira Geliri", min_value=0.0, step=1000.0)
 with c2:
-    isyeri_net = st.number_input("🏢 İşyeri Net Kira (Elinize Geçen)", min_value=0.0, step=1000.0)
+    isyeri_net = st.number_input("🏢 Yıllık İşyeri Net Kira (Elinize Geçen-Stopaj Hariç)", min_value=0.0, step=1000.0)
 
 # --- HESAPLAMA ---
 isyeri_brut = isyeri_net / 0.80 if isyeri_net > 0 else 0.0
