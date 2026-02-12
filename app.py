@@ -65,7 +65,7 @@ kesilen_stopaj = beyana_dahil_isyeri * 0.20
 net_sonuc = tahakkuk_eden - kesilen_stopaj
 
 # --- RAPOR TABLOSU ---
-st.markdown(f"#### 🧾 {vergi_yili} Yılı Detaylı Döküm")
+st.markdown(f"#### 🧾 {vergi_yili} Yılı Vergi Detayı")
 son_deger = f"{net_sonuc:,.2f} TL" if net_sonuc > 0 else f"{abs(net_sonuc):,.2f} TL (İade)"
 son_etiket = "💸 Ödenecek Vergi" if net_sonuc > 0 else "🏦 İade Alınacak"
 
