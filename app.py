@@ -79,14 +79,14 @@ son_etiket = "💸 Ödenecek Vergi" if net_sonuc > 0 else "🏦 İade Alınacak"
 
 report_df = pd.DataFrame({
     "Açıklama": [
-        "0️⃣ Toplam Brüt Kira Hasılatı 💰",
-        "1️⃣ İşyeri Beyan Durumu 🏢",
-        "2️⃣ Uygulanan Mesken İstisnası 💎",
-        "3️⃣ Düşülen %15 Götürü Gider 📉",
-        "4️⃣ Vergi Matrahı 📝",
-        "5️⃣ Hesaplanan Gelir Vergisi 📋",
-        "6️⃣ Mahsup Edilecek Stopaj (İşyeri) ✂️",
-        f"7️⃣ {son_etiket}" # Burası otomatik emoji (💸 veya 🏦) alıyor
+        "Toplam Brüt Kira Hasılatı",
+        "İşyeri Beyan Durumu",
+        "Uygulanan Mesken İstisnası",
+        "Düşülen %15 Götürü Gider",
+        "Vergi Matrahı",
+        "Hesaplanan Gelir Vergisi",
+        "Mahsup Edilecek Stopaj (İşyeri)",
+        son_etiket
     ],
     "Tutar / Bilgi": [
         f"{toplam_gelir_brut:,.2f} TL",
@@ -97,8 +97,6 @@ report_df = pd.DataFrame({
         f"{tahakkuk_eden:,.2f} TL",
         f"- {kesilen_stopaj:,.2f} TL",
         f"**{son_deger}**"
-    ]
-})
     ]
 })
 st.table(report_df)
