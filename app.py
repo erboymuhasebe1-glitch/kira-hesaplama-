@@ -29,7 +29,7 @@ st.markdown("---")
 # --- VERİ GİRİŞİ (ANA EKRAN) ---
 st.markdown("#### 📊 Yalnızca Kira Geliri Elde Edenlere Yönelik Vergi Hesaplama Tablosu")
 col_year = st.columns([1, 2])[0]
-vergi_yili = col_year.selectbox("Hesaplama Yılı", ["2026", "2025"])
+vergi_yili = col_year.selectbox("Kiranın Tahsil Edildiği Yıl", ["2026", "2025"])
 
 c1, c2 = st.columns(2)
 with c1:
