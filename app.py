@@ -35,7 +35,7 @@ c1, c2 = st.columns(2)
 with c1:
     mesken_brut = st.number_input("Konut Kira Geliri", min_value=0.0, step=1000.0, key="mesken")
 with c2:
-    isyeri_brut = st.number_input("İşyeri Brüt Kira Geliri (Stopaj Dahil Yazılacaktır) [Net Alınan Kirayı 0,80'e bölerek Brüt Kirayı Hesaplayabilirsiniz]", min_value=0.0, step=1000.0, key="isyeri")
+    isyeri_brut = st.number_input("İşyeri Brüt Kira Geliri (Stopaj Hariç Yazılacaktır) ", min_value=0.0, step=1000.0, key="isyeri")
 
 # --- YILA GÖRE PARAMETRELER ---
 if vergi_yili == "2025":
