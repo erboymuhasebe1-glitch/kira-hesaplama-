@@ -91,7 +91,7 @@ report_df = pd.DataFrame({
         "Toplam Brüt Kira Hasılatı",
         "İşyeri Beyan Durumu",
         "Uygulanan Mesken İstisnası",
-        "Beyan Edilen Matrah (%15 Götürü Gider)",
+        "Beyan Edilen Matrah (%15 Götürü Gider Düşüldü)",
         "Hesaplanan Gelir Vergisi",
         "Mahsup Edilecek Stopaj (İşyeri)",
         "Net Ödenecek / İade"
