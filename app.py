@@ -25,21 +25,20 @@ else:
 st.markdown("---")
 
 # --- VERİ GİRİŞİ ---
-st.markdown("#### 📊 Yalnızca Kira Geliri Elde Edenlere Yönelik Vergi Hesaplama Tablosu")
+st.markdown("#### 📊 Vergi Hesaplama Paneli")
 c_user = st.columns([2, 1])
 with c_user[0]:
     user_name = st.text_input("👤 Adınız ve Soyadınız", placeholder="Mesajda görünmesi için lütfen yazınız")
 with c_user[1]:
-    vergi_yili = st.selectbox("📅 Kiranın Tahsil Edildiği Yıl", ["2026", "2025"])
+    vergi_yili = st.selectbox("📅 Tahsil Yılı", ["2026", "2025"])
 
 c1, c2 = st.columns(2)
 with c1:
     mesken_brut = st.number_input("🏠 Yıllık Konut Kira Geliri", min_value=0.0, step=1000.0)
 with c2:
-    isyeri_net = st.number_input("🏢 İşyeri Net Kira (Elinize Geçen)", min_value=0.0, step=1000.0)
+    isyeri_net = st.number_input("🏢 Yıllık İşyeri Net Kira (Elinize Geçen-Stopaj Hariç)", min_value=0.0, step=1000.0)
 
-# --- HESAPLAMA MOTORU ---
-# İşyeri Net tutarı 0.80'e bölünerek Brüt tutar bulunur
+# --- HESAPLAMA ---
 isyeri_brut = isyeri_net / 0.80 if isyeri_net > 0 else 0.0
 toplam_gelir_brut = isyeri_brut + mesken_brut
 
@@ -50,14 +49,13 @@ else:
     istisna_siniri, haddi_siniri, beyan_siniri = 58000, 1500000, 400000
     dilimler, oranlar, sabitlemeler = [190000, 400000, 1000000, 5300000], [0.15, 0.20, 0.27, 0.35, 0.40], [0, 28500, 70500, 232500, 1737500]
 
-# İşyeri Beyan Durumu (Dahillik kuralı: Toplam <= Sınır ise işyeri beyan edilmez)
+# Beyan Sınırı Kontrolü
 beyana_dahil_isyeri = isyeri_brut if toplam_gelir_brut > beyan_siniri else 0.0
-isyeri_notu = "Beyana Dahil ✅" if beyana_dahil_isyeri > 0 else "Sınır Altı (Beyana Dahil Değil) ℹ️"
 
 # İstisna Hesaplama
 istisna_tutari = min(float(istisna_siniri), mesken_brut) if (mesken_brut > 0 and toplam_gelir_brut < haddi_siniri) else 0.0
 
-# Gider Hesaplama (%15 Götürü)
+# GİDER HESAPLAMA (Talebiniz üzerine ayrıştırıldı)
 istisna_sonrasi_toplam = (mesken_brut + beyana_dahil_isyeri) - istisna_tutari
 gider_tutari = max(0.0, istisna_sonrasi_toplam * 0.15)
 matrah = max(0.0, istisna_sonrasi_toplam - gider_tutari)
@@ -74,26 +72,25 @@ tahakkuk_eden = vergi_hesapla(matrah, dilimler, oranlar, sabitlemeler)
 kesilen_stopaj = beyana_dahil_isyeri * 0.20
 net_sonuc = tahakkuk_eden - kesilen_stopaj
 
-# --- SONUÇ TABLOSU ---
-st.markdown(f"#### 🧾 {vergi_yili} Yılı Vergi Hesaplama Özeti")
-
+# --- RAPOR TABLOSU ---
+st.markdown(f"#### 🧾 {vergi_yili} Yılı Detaylı Döküm")
 son_deger = f"{net_sonuc:,.2f} TL" if net_sonuc > 0 else f"{abs(net_sonuc):,.2f} TL (İade)"
-son_etiket = "💸 Net Ödenecek Vergi" if net_sonuc > 0 else "🏦 İade Alınacak Tutar"
+son_etiket = "💸 Ödenecek Vergi" if net_sonuc > 0 else "🏦 İade Alınacak"
 
 report_df = pd.DataFrame({
     "Açıklama": [
-        "0️⃣ Toplam Brüt Kira Hasılatı 💰",
-        "1️⃣ İşyeri Beyan Durumu 🏢",
-        "2️⃣ Uygulanan Mesken İstisnası 💎",
-        "3️⃣ Düşülen %15 Götürü Gider 📉",
-        "4️⃣ Vergi Matrahı 📝",
-        "5️⃣ Hesaplanan Gelir Vergisi 📋",
-        "6️⃣ Mahsup Edilecek Stopaj (İşyeri) ✂️",
-        f"7️⃣ {son_etiket}"
+        "Toplam Brüt Kira Hasılatı",
+        "İşyeri Beyan Durumu",
+        "Uygulanan Mesken İstisnası",
+        "Düşülen %15 Götürü Gider",
+        "Vergi Matrahı",
+        "Hesaplanan Gelir Vergisi",
+        "Mahsup Edilecek Stopaj (İşyeri)",
+        son_etiket
     ],
     "Tutar / Bilgi": [
         f"{toplam_gelir_brut:,.2f} TL",
-        isyeri_notu,
+        "Beyana Dahil" if beyana_dahil_isyeri > 0 else "Sınır Altı (Beyana Dahil Değil)",
         f"- {istisna_tutari:,.2f} TL",
         f"- {gider_tutari:,.2f} TL",
         f"{matrah:,.2f} TL",
@@ -137,5 +134,3 @@ st.markdown(f"""
         </div>
     </a>
     """, unsafe_allow_html=True)
-
-st.caption("Not: İşyeri kirası için girilen net tutar, %20 stopaj oranı üzerinden brütleştirilmiştir.")
