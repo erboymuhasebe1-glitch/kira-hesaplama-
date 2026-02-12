@@ -33,9 +33,13 @@ vergi_yili = col_year.selectbox("Kiranın Tahsil Edildiği Yıl", ["2026", "2025
 
 c1, c2 = st.columns(2)
 with c1:
-    mesken_brut = st.number_input("Konut Kira Geliri", min_value=0.0, step=1000.0, key="mesken")
+    mesken_brut = st.number_input("Konut Kira Geliri (Yıllık Toplam)", min_value=0.0, step=1000.0, key="mesken")
 with c2:
-    isyeri_brut = st.number_input("İşyeri Brüt Kira Geliri (Stopaj Hariç Yazılacaktır) ", min_value=0.0, step=1000.0, key="isyeri")
+    isyeri_net = st.number_input("İşyeri Kira Geliri (Elinize Geçen Net Tutarı Yazınız)", min_value=0.0, step=1000.0, key="isyeri")
+
+# --- ARKA PLANDA BRÜT HESAPLAMA ---
+# İşyeri Net tutarı 0.80'e bölünerek Brüt tutar bulunur
+isyeri_brut = isyeri_net / 0.80 if isyeri_net > 0 else 0.0
 
 # --- YILA GÖRE PARAMETRELER ---
 if vergi_yili == "2025":
@@ -52,14 +56,14 @@ else:
 # --- HESAPLAMA MOTORU ---
 toplam_gelir_brut = isyeri_brut + mesken_brut
 
-# İşyeri Beyan Durumu (Dahillik kuralı: Toplam <= Sınır ise işyeri beyan edilmez)
+# İşyeri Beyan Durumu (Dahillik kuralı)
 beyana_dahil_isyeri = 0.0
 if toplam_gelir_brut > beyan_siniri:
     beyana_dahil_isyeri = isyeri_brut
     isyeri_notu = "Beyana Dahil (Sınır Aşıldı)"
 else:
     beyana_dahil_isyeri = 0.0
-    isyeri_notu = f"{beyan_siniri:,.0f} TL Sınırı Aşılmadı (İşyeri Dahil Edilmedi)"
+    isyeri_notu = f"{beyan_siniri:,.0f} TL Sınırı Aşılmadı (İşyeri Beyan Edilmez)"
 
 # İstisna Hesaplama
 istisna_tutari = 0.0
@@ -77,24 +81,30 @@ def vergi_hesapla(m, d, o, s):
     elif m <= d[3]: return s[3] + (m - d[2]) * o[3]
     else: return s[4] + (m - d[3]) * o[4]
 
-# HATA ALINAN SATIRIN DÜZELTİLMİŞ HALİ
 tahakkuk_eden = vergi_hesapla(matrah, dilimler, oranlar, sabitlemeler)
+# Stopaj, beyana dahil edilen Brüt İşyeri kirasının %20'si olarak hesaplanır
 kesilen_stopaj = beyana_dahil_isyeri * 0.20
 net_sonuc = tahakkuk_eden - kesilen_stopaj
 
 # --- SONUÇ TABLOSU ---
-st.markdown(f"#### 🧾 {vergi_yili} Yılı Ödenecek Vergi")
-sonuc_metni = f"Ödenecek: {net_sonuc:,.2f} TL" if net_sonuc > 0 else f"İade: {abs(net_sonuc):,.2f} TL"
+st.markdown(f"#### 🧾 {vergi_yili} Yılı Vergi Hesaplama Özeti")
+
+if net_sonuc > 0:
+    son_etiket = "💸 Net Ödenecek Vergi"
+    son_deger = f"{net_sonuc:,.2f} TL"
+else:
+    son_etiket = "🏦 İade Alınacak Tutar"
+    son_deger = f"{abs(net_sonuc):,.2f} TL"
 
 report_df = pd.DataFrame({
     "Açıklama": [
         "Toplam Brüt Kira Hasılatı",
         "İşyeri Beyan Durumu",
         "Uygulanan Mesken İstisnası",
-        "Beyan Edilen Matrah (%15 Götürü Gider Düşüldü)",
+        "Beyan Edilen Matrah (%15 Götürü Gider)",
         "Hesaplanan Gelir Vergisi",
-        "Mahsup Edilecek Stopaj (İşyeri)",
-        "Net Ödenecek / İade"
+        "Mahsup Edilecek Stopaj (Brüt Üzerinden %20)",
+        son_etiket
     ],
     "Tutar / Bilgi": [
         f"{toplam_gelir_brut:,.2f} TL",
@@ -103,14 +113,14 @@ report_df = pd.DataFrame({
         f"{matrah:,.2f} TL",
         f"{tahakkuk_eden:,.2f} TL",
         f"- {kesilen_stopaj:,.2f} TL",
-        f"**{sonuc_metni}**"
+        f"**{son_deger}**"
     ]
 })
 st.table(report_df)
 
 # --- WHATSAPP BUTONU ---
 tel_no = "902165670945"
-wa_msg = urllib.parse.quote(f"*Çbk Mali Müşavirlik Kira Raporu ({vergi_yili})*\n\n*Toplam Brüt:* {toplam_gelir_brut:,.2f} TL\n*Matrah:* {matrah:,.2f} TL\n*Sonuç:* {sonuc_metni}")
+wa_msg = urllib.parse.quote(f"*Çbk Mali Müşavirlik Kira Raporu ({vergi_yili})*\n\n*Brüt Toplam:* {toplam_gelir_brut:,.2f} TL\n*Matrah:* {matrah:,.2f} TL\n*Sonuç:* {son_deger}")
 wa_link = f"https://api.whatsapp.com/send?phone={tel_no}&text={wa_msg}"
 
 st.markdown(f"""
@@ -120,3 +130,5 @@ st.markdown(f"""
         </div>
     </a>
     """, unsafe_allow_html=True)
+
+st.caption("Not: İşyeri kirası için girilen net tutar, %20 stopaj oranı üzerinden brütleştirilmiştir.")
