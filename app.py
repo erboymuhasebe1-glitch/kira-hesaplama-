@@ -30,7 +30,7 @@ c_user = st.columns([2, 1])
 with c_user[0]:
     user_name = st.text_input("👤 Adınız ve Soyadınız", placeholder="Mesajda görünmesi için lütfen yazınız")
 with c_user[1]:
-    vergi_yili = st.selectbox("📅 Tahsil Yılı", ["2026", "2025"])
+    vergi_yili = st.selectbox("📅 Beyan Yılı", ["2026", "2025"])
 
 c1, c2 = st.columns(2)
 with c1:
