@@ -36,7 +36,7 @@ c1, c2 = st.columns(2)
 with c1:
     mesken_brut = st.number_input("🏠 Yıllık Konut Kira Geliri", min_value=0.0, step=1000.0)
 with c2:
-    isyeri_net = st.number_input("🏢 Yıllık İşyeri Net Kira (Elinize Geçen)", min_value=0.0, step=1000.0)
+    isyeri_net = st.number_input("🏢 Yıllık İşyeri Net Kira (Elinize Geçen-Stopaj Hariç)", min_value=0.0, step=1000.0)
 
 # --- HESAPLAMA ÖN HAZIRLIK ---
 # İşyeri Net tutarı 0.80'e bölünerek Brüt tutar bulunur
