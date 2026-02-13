@@ -12,6 +12,8 @@ st.markdown("""
     .main { background-color: #f8f9fa; }
     h1, h2, h3, h4 { color: #1e3d59; font-family: 'Arial'; }
     .stNumberInput, .stSelectbox, .stTextInput, .stRadio { border: 1px solid #1e3d59 !important; border-radius: 5px; padding: 10px; }
+    /* Uyarı kutusunu özelleştirme */
+    .stAlert { padding: 10px; border-radius: 5px; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -25,21 +27,28 @@ else:
 st.markdown("---")
 
 # --- VERİ GİRİŞİ ---
-st.markdown("#### 📊 Sadece Kira Geliri Elde Edenlere Yönelik Vergi Hesaplama Paneli")
+st.markdown("#### 📊 Kira Geliri Vergi Hesaplama Paneli")
 c_user = st.columns([2, 1])
+
 with c_user[0]:
     user_name = st.text_input("👤 Adınız ve Soyadınız", placeholder="Mesajda görünmesi için lütfen yazınız")
+
 with c_user[1]:
     vergi_yili = st.selectbox("📅 Beyan Yılı", ["2026", "2025"])
+    
+    # --- TARİH UYARISI BURAYA EKLENDİ ---
+    if vergi_yili == "2025":
+        st.warning("⚠️ 31.03.2026 tarihine kadar beyan edilecektir.")
+    else:
+        st.warning("⚠️ 31.03.2027 tarihine kadar beyan edilecektir.")
 
 c1, c2 = st.columns(2)
 with c1:
     mesken_brut = st.number_input("🏠 Yıllık Konut Kira Geliri", min_value=0.0, step=1000.0)
 with c2:
-    isyeri_net = st.number_input("🏢 Yıllık İşyeri Net Kira (Elinize Geçen-Stopaj Hariç)", min_value=0.0, step=1000.0)
+    isyeri_net = st.number_input("🏢 Yıllık İşyeri Net Kira (Elinize Geçen)", min_value=0.0, step=1000.0)
 
 # --- HESAPLAMA ÖN HAZIRLIK ---
-# İşyeri Net tutarı 0.80'e bölünerek Brüt tutar bulunur
 isyeri_brut = isyeri_net / 0.80 if isyeri_net > 0 else 0.0
 toplam_gelir_brut = isyeri_brut + mesken_brut
 
@@ -125,7 +134,7 @@ report_df = pd.DataFrame({
     ]
 })
 
-# DÜZELTME: İndeks numaralarını (0-7) kaldırmak için set_index kullanıyoruz
+# Tabloyu indeks numaraları olmadan temiz göster
 st.table(report_df.set_index("Açıklama"))
 
 # --- WHATSAPP DETAYLI DÖKÜM ---
