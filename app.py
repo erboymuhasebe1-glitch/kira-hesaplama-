@@ -11,7 +11,7 @@ st.markdown("""
     <style>
     .main { background-color: #f8f9fa; }
     h1, h2, h3, h4 { color: #1e3d59; font-family: 'Arial'; }
-    .stNumberInput, .stSelectbox, .stTextInput { border: 1px solid #1e3d59 !important; border-radius: 5px; }
+    .stNumberInput, .stSelectbox, .stTextInput, .stRadio { border: 1px solid #1e3d59 !important; border-radius: 5px; padding: 10px; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -25,7 +25,7 @@ else:
 st.markdown("---")
 
 # --- VERİ GİRİŞİ ---
-st.markdown("#### 📊 Sadece Kira Geliri Elde Edenlere Yönelik Vergi Hesaplama Paneli")
+st.markdown("#### 📊 Kira Geliri Vergi Hesaplama Paneli")
 c_user = st.columns([2, 1])
 with c_user[0]:
     user_name = st.text_input("👤 Adınız ve Soyadınız", placeholder="Mesajda görünmesi için lütfen yazınız")
@@ -36,9 +36,10 @@ c1, c2 = st.columns(2)
 with c1:
     mesken_brut = st.number_input("🏠 Yıllık Konut Kira Geliri", min_value=0.0, step=1000.0)
 with c2:
-    isyeri_net = st.number_input("🏢 Yıllık İşyeri Net Kira (Elinize Geçen-Stopaj Hariç)", min_value=0.0, step=1000.0)
+    isyeri_net = st.number_input("🏢 Yıllık İşyeri Net Kira (Elinize Geçen)", min_value=0.0, step=1000.0)
 
-# --- HESAPLAMA ---
+# --- HESAPLAMA ÖN HAZIRLIK ---
+# İşyeri Net tutarı 0.80'e bölünerek Brüt tutar bulunur
 isyeri_brut = isyeri_net / 0.80 if isyeri_net > 0 else 0.0
 toplam_gelir_brut = isyeri_brut + mesken_brut
 
@@ -51,13 +52,40 @@ else:
 
 # Beyan Sınırı Kontrolü
 beyana_dahil_isyeri = isyeri_brut if toplam_gelir_brut > beyan_siniri else 0.0
+isyeri_notu = "Beyana Dahil ✅" if beyana_dahil_isyeri > 0 else "Sınır Altı (Beyana Dahil Değil) ℹ️"
 
 # İstisna Hesaplama
 istisna_tutari = min(float(istisna_siniri), mesken_brut) if (mesken_brut > 0 and toplam_gelir_brut < haddi_siniri) else 0.0
-
-# GİDER HESAPLAMA (Talebiniz üzerine ayrıştırıldı)
 istisna_sonrasi_toplam = (mesken_brut + beyana_dahil_isyeri) - istisna_tutari
-gider_tutari = max(0.0, istisna_sonrasi_toplam * 0.15)
+
+# --- GİDER YÖNTEMİ SEÇİMİ (YENİ EKLENDİ) ---
+st.markdown("---")
+st.markdown("##### 📉 Gider Yöntemi Seçimi")
+gider_yontemi = st.radio(
+    "Beyan Yöntemini Seçiniz:",
+    ["Götürü Gider Yöntemi (%15 Otomatik İndirim)", "Gerçek Gider Yöntemi (Belgeli Giderler)"],
+    horizontal=True
+)
+
+gider_tutari = 0.0
+aciklama_gider = ""
+
+if "Götürü" in gider_yontemi:
+    # Götürü Gider Hesabı
+    gider_tutari = max(0.0, istisna_sonrasi_toplam * 0.15)
+    aciklama_gider = "Düşülen %15 Götürü Gider"
+else:
+    # Gerçek Gider Hesabı
+    st.info("ℹ️ Gerçek gider yönteminde, kiraya konu mülk için yaptığınız harcamaları (ısı yalıtımı, onarım, sigorta vb.) düşebilirsiniz.")
+    user_gercek_gider = st.number_input("🧾 İndirilecek Toplam Gider Tutarını Yazınız", min_value=0.0, step=100.0)
+    
+    # Gerçek gider istisna sonrası gelirden fazla olamaz (Matrah negatif olamaz)
+    # Not: Gerçek usulde istisnaya isabet eden giderin düşülemeyeceği kuralı kullanıcı tarafından hesaplanmış varsayılır
+    # veya basitleştirmek adına direkt girilen tutar düşülür.
+    gider_tutari = user_gercek_gider
+    aciklama_gider = "Düşülen Gerçek Gider Tutarı"
+
+# Matrah Hesaplama
 matrah = max(0.0, istisna_sonrasi_toplam - gider_tutari)
 
 # Vergi Hesaplama Fonksiyonu
@@ -72,25 +100,26 @@ tahakkuk_eden = vergi_hesapla(matrah, dilimler, oranlar, sabitlemeler)
 kesilen_stopaj = beyana_dahil_isyeri * 0.20
 net_sonuc = tahakkuk_eden - kesilen_stopaj
 
-# --- RAPOR TABLOSU ---
-st.markdown(f"#### 🧾 {vergi_yili} Yılı Detaylı Döküm")
+# --- SONUÇ TABLOSU ---
+st.markdown(f"#### 🧾 {vergi_yili} Yılı Hesaplama Özeti")
+
 son_deger = f"{net_sonuc:,.2f} TL" if net_sonuc > 0 else f"{abs(net_sonuc):,.2f} TL (İade)"
-son_etiket = "💸 Ödenecek Vergi" if net_sonuc > 0 else "🏦 İade Alınacak"
+son_etiket = "💸 Net Ödenecek Vergi" if net_sonuc > 0 else "🏦 İade Alınacak Tutar"
 
 report_df = pd.DataFrame({
     "Açıklama": [
-        "Toplam Brüt Kira Hasılatı",
-        "İşyeri Beyan Durumu",
-        "Uygulanan Mesken İstisnası",
-        "Düşülen %15 Götürü Gider",
-        "Vergi Matrahı",
-        "Hesaplanan Gelir Vergisi",
-        "Mahsup Edilecek Stopaj (İşyeri)",
-        son_etiket
+        "0️⃣ Toplam Brüt Kira Hasılatı 💰",
+        "1️⃣ İşyeri Beyan Durumu 🏢",
+        "2️⃣ Uygulanan Mesken İstisnası 💎",
+        f"3️⃣ {aciklama_gider} 📉",
+        "4️⃣ Vergi Matrahı 📝",
+        "5️⃣ Hesaplanan Gelir Vergisi 📋",
+        "6️⃣ Mahsup Edilecek Stopaj (İşyeri) ✂️",
+        f"7️⃣ {son_etiket}"
     ],
     "Tutar / Bilgi": [
         f"{toplam_gelir_brut:,.2f} TL",
-        "Beyana Dahil" if beyana_dahil_isyeri > 0 else "Sınır Altı (Beyana Dahil Değil)",
+        isyeri_notu,
         f"- {istisna_tutari:,.2f} TL",
         f"- {gider_tutari:,.2f} TL",
         f"{matrah:,.2f} TL",
@@ -105,16 +134,18 @@ st.table(report_df)
 tel_no = "902165670945"
 emoji_sonuc = "🔴" if net_sonuc > 0 else "🟢"
 mesaj_adi = user_name if user_name else "Değerli Mükellefimiz"
+yontem_kisa = "Götürü (%15)" if "Götürü" in gider_yontemi else "Gerçek Gider"
 
 wa_msg = (
     f"🏛 *ÇBK MALİ MÜŞAVİRLİK KİRA RAPORU*\n"
     f"------------------------------------\n"
     f"👤 *Mükellef:* {mesaj_adi}\n"
-    f"📅 *Dönem:* {vergi_yili}\n\n"
+    f"📅 *Dönem:* {vergi_yili}\n"
+    f"⚙️ *Yöntem:* {yontem_kisa}\n\n"
     f"🏠 *Konut Brüt:* {mesken_brut:,.2f} TL\n"
     f"🏢 *İşyeri Brüt:* {isyeri_brut:,.2f} TL\n"
     f"💎 *İstisna:* -{istisna_tutari:,.2f} TL\n"
-    f"📉 *%15 Gider:* -{gider_tutari:,.2f} TL\n"
+    f"📉 *Gider:* -{gider_tutari:,.2f} TL\n"
     f"📝 *Vergi Matrahı:* {matrah:,.2f} TL\n"
     f"------------------------------------\n"
     f"📋 *Hesaplanan Vergi:* {tahakkuk_eden:,.2f} TL\n"
@@ -134,3 +165,5 @@ st.markdown(f"""
         </div>
     </a>
     """, unsafe_allow_html=True)
+
+st.caption("Not: İşyeri kirası için girilen net tutar, %20 stopaj oranı üzerinden brütleştirilmiştir.")
