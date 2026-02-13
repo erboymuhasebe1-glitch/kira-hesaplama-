@@ -26,7 +26,7 @@ else:
 st.markdown("---")
 
 # --- VERİ GİRİŞİ ---
-st.markdown("#### 📊 Kira Geliri Vergi Hesaplama Paneli")
+st.markdown("#### 📊 Sadece Kira Geliri Elde Edenlere Yönelik Vergi Hesaplama Paneli")
 c_user = st.columns([2, 1])
 
 with c_user[0]:
@@ -41,9 +41,9 @@ with c_user[1]:
     
     # 3. Seçilen yıla göre, ayırdığımız en üstteki yere uyarıyı basıyoruz
     if vergi_yili == "2025":
-        tarih_uyarisi_yeri.warning("⚠️ Son Beyan: 31.03.2026")
+        tarih_uyarisi_yeri.warning("⚠️ Son Beyan Tarihi: 31.03.2026")
     else:
-        tarih_uyarisi_yeri.warning("⚠️ Son Beyan: 31.03.2027")
+        tarih_uyarisi_yeri.warning("⚠️ Son Beyan Tarihi: 31.03.2027")
 
 c1, c2 = st.columns(2)
 with c1:
