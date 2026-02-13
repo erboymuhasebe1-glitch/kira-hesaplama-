@@ -25,7 +25,7 @@ else:
 st.markdown("---")
 
 # --- VERİ GİRİŞİ ---
-st.markdown("#### 📊 Kira Geliri Vergi Hesaplama Paneli")
+st.markdown("#### 📊 Sadece Kira Geliri Elde Edenlere Yönelik Vergi Hesaplama Paneli")
 c_user = st.columns([2, 1])
 with c_user[0]:
     user_name = st.text_input("👤 Adınız ve Soyadınız", placeholder="Mesajda görünmesi için lütfen yazınız")
@@ -58,7 +58,7 @@ isyeri_notu = "Beyana Dahil ✅" if beyana_dahil_isyeri > 0 else "Sınır Altı 
 istisna_tutari = min(float(istisna_siniri), mesken_brut) if (mesken_brut > 0 and toplam_gelir_brut < haddi_siniri) else 0.0
 istisna_sonrasi_toplam = (mesken_brut + beyana_dahil_isyeri) - istisna_tutari
 
-# --- GİDER YÖNTEMİ SEÇİMİ (YENİ EKLENDİ) ---
+# --- GİDER YÖNTEMİ SEÇİMİ ---
 st.markdown("---")
 st.markdown("##### 📉 Gider Yöntemi Seçimi")
 gider_yontemi = st.radio(
@@ -78,10 +78,6 @@ else:
     # Gerçek Gider Hesabı
     st.info("ℹ️ Gerçek gider yönteminde, kiraya konu mülk için yaptığınız harcamaları (ısı yalıtımı, onarım, sigorta vb.) düşebilirsiniz.")
     user_gercek_gider = st.number_input("🧾 İndirilecek Toplam Gider Tutarını Yazınız", min_value=0.0, step=100.0)
-    
-    # Gerçek gider istisna sonrası gelirden fazla olamaz (Matrah negatif olamaz)
-    # Not: Gerçek usulde istisnaya isabet eden giderin düşülemeyeceği kuralı kullanıcı tarafından hesaplanmış varsayılır
-    # veya basitleştirmek adına direkt girilen tutar düşülür.
     gider_tutari = user_gercek_gider
     aciklama_gider = "Düşülen Gerçek Gider Tutarı"
 
@@ -128,7 +124,9 @@ report_df = pd.DataFrame({
         f"**{son_deger}**"
     ]
 })
-st.table(report_df)
+
+# DÜZELTME: İndeks numaralarını (0-7) kaldırmak için set_index kullanıyoruz
+st.table(report_df.set_index("Açıklama"))
 
 # --- WHATSAPP DETAYLI DÖKÜM ---
 tel_no = "902165670945"
