@@ -12,8 +12,7 @@ st.markdown("""
     .main { background-color: #f8f9fa; }
     h1, h2, h3, h4 { color: #1e3d59; font-family: 'Arial'; }
     .stNumberInput, .stSelectbox, .stTextInput, .stRadio { border: 1px solid #1e3d59 !important; border-radius: 5px; padding: 10px; }
-    /* Uyarı kutusunu özelleştirme */
-    .stAlert { padding: 10px; border-radius: 5px; }
+    .stAlert { padding: 8px; border-radius: 5px; font-weight: bold; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -34,13 +33,17 @@ with c_user[0]:
     user_name = st.text_input("👤 Adınız ve Soyadınız", placeholder="Mesajda görünmesi için lütfen yazınız")
 
 with c_user[1]:
+    # 1. Önce kutunun üstünde yer ayırıyoruz (Placeholder)
+    tarih_uyarisi_yeri = st.empty()
+    
+    # 2. Seçim kutusunu oluşturuyoruz
     vergi_yili = st.selectbox("📅 Beyan Yılı", ["2026", "2025"])
     
-    # --- TARİH UYARISI BURAYA EKLENDİ ---
+    # 3. Seçilen yıla göre, ayırdığımız en üstteki yere uyarıyı basıyoruz
     if vergi_yili == "2025":
-        st.warning("⚠️ 31.03.2026 tarihine kadar beyan edilecektir.")
+        tarih_uyarisi_yeri.warning("⚠️ Son Beyan: 31.03.2026")
     else:
-        st.warning("⚠️ 31.03.2027 tarihine kadar beyan edilecektir.")
+        tarih_uyarisi_yeri.warning("⚠️ Son Beyan: 31.03.2027")
 
 c1, c2 = st.columns(2)
 with c1:
